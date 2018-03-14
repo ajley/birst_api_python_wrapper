@@ -1,7 +1,7 @@
 #!/usr/local/bin/python3
 
 """This file builds functions on top of the 'birst_api_base_calsl' file and performs basic actions against
- Birst's CommandWebServie.asmx
+ Birst's CommandWebService.asmx
 
 Start by calling get_session with appropriate url (<birst_server>/CommandWebService.asmx?wsdl) with valid
 admin credentials. It will return a namedtuple containing a Zeep Client object and security token
@@ -26,8 +26,7 @@ def get_session(uri, user, passwd=''):
         client = Client(uri)
     except Exception as e:
         logging.error("Couldn't get wsdl:" + repr(e))
-        print('ConnectionError - check wsdl uri ')
-        exit(1)
+        return 1
     try:
         sec_token = login(client, user, passwd)
         if not sec_token:
@@ -36,8 +35,7 @@ def get_session(uri, user, passwd=''):
         return session
     except Exception as e:
         logging.error(repr(e))
-        print(e)
-        exit(1)
+        return 1
 
 
 def update_space_properties(session, space_id, **kargs):
@@ -65,6 +63,16 @@ def update_space_properties(session, space_id, **kargs):
 
 def update_group_acls(session, space_id, group_name, *args):
     try:
+        available_acls = get_acls(session)
+    except Exception as e:
+        logging.error("Can't get available acls : {}".format(repr(e)))
+        return 1
+    if args is not None:
+        for arg in args:
+                if arg not in available_acls:
+                    logging.error("You sent an ACL that doesn't exist: {}".format(arg))
+                    return 1
+    try:
         logging.info("getting current acls for group: {}".format(group_name))
         current_acls = get_group_acls(session, space_id, group_name)
     except Exception as e:
@@ -74,29 +82,25 @@ def update_group_acls(session, space_id, group_name, *args):
         if args is None and current_acls is None:
             logging.info("group {} didn't have any acls, and you sent None in the call"
                          ", no change was made".format(group_name))
-            return 0
         elif args is None:
             for acl in current_acls:
-                #remove each acl
-                pass
+                remove_acl_from_group(session, space_id, group_name, acl)
+                logging.info("all acls removed from {}".format(group_name))
         elif current_acls is None:
             for acl in args:
-                #add each new acl
-                pass
+                add_acl_to_group(session, space_id, group_name, acl)
         else:
             for acl in current_acls:
                 if acl not in args:
-                    #remove acls
-                    pass
+                    remove_acl_from_group(session, space_id, group_name, acl)
             for acl in args:
                 if acl not in current_acls:
-                    #add acls
-                    pass
+                    add_acl_to_group(session, space_id, group_name, acl)
         logging.info("acls updated to {} fro group: {}".format(args, group_name))
-        return 0
+        return
     except Exception as e:
         logging.error("Couldn't update acls for group: {}:  current acls: {}, acls to set"
-                      ": {}".format(group_name, current_acls, args))
+                      ": {} : {}".format(group_name, current_acls, args, repr(e)))
         return 1
 
 

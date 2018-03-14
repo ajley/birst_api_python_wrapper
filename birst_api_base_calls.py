@@ -94,6 +94,18 @@ def get_group_acls(session, space_id, group_name):
     return result
 
 
+def remove_acl_from_group(session, space_id, group_name, acl):
+    result = session.client.service.removeAclFromGroupInSpace(token=session.token, groupName=group_name,
+                                                              aclTag=acl, spaceID=space_id)
+    return result
+
+
+def add_acl_to_group(session, space_id, group_name, acl):
+    result = session.client.service.addAclToGroupInSpace(token=session.token, groupName=group_name,
+                                                           aclTag=acl, spaceID=space_id)
+    return result
+
+
 def get_space_processing_engine_version(session, space_id):
     result = session.client.service.getSpaceProcessEngineVersion(token=session.token, spaceID=space_id)
     return result
