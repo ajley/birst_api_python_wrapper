@@ -62,6 +62,14 @@ def update_space_properties(session, space_id, **kargs):
 
 
 def update_group_acls(session, space_id, group_name, *args):
+    """
+    allows you to update the acls for a specific group within a space.
+    :param session:
+    :param space_id:
+    :param group_name:
+    :param args:
+    :return:
+    """
     try:
         available_acls = get_acls(session)
     except Exception as e:
